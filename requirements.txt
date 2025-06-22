@@ -1,0 +1,5 @@
+flask
+requests
+flask-cors
+mysql-connector-python
+werkzeug
