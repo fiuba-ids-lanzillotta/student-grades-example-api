@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Detalle Alumno</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    function mostrarDetalle(nombre, nota, fecha) {
+      document.getElementById("detalleMateriaNombre").textContent = nombre;
+      document.getElementById("detalleMateriaNota").textContent = nota;
+      document.getElementById("detalleMateriaFecha").textContent = fecha;
+      document.getElementById("modalDetalleMateria").style.display = "block";
+    }
+
+    function cerrarModalDetalleMateria() {
+      document.getElementById("modalDetalleMateria").style.display = "none";
+    }
+
+    function abrirModal() {
+      document.getElementById("modal").style.display = "block";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+      const modalDetalle = document.getElementById("modalDetalleMateria");
+      const modal = document.getElementById("modal");
+      const modalAlumnos = document.getElementById("modalAlumnosMateria");
+      if (event.target === modalDetalle) {
+        cerrarModalDetalleMateria();
+      } else if (event.target === modal) {
+        cerrarModal();
+      } else if (event.target === modalAlumnos) {
+        cerrarModalAlumnosMateria();
+      }
+    };
+
+    async function mostrarAlumnosMateria(codigo) {
+        const res = await fetch(`/materias/${codigo}/alumnos`);
+        const alumnos = await res.json();
+
+        document.getElementById("nombreMateriaModal").textContent = codigo;
+
+        const tabla = document.getElementById("alumnosMateriaTabla");
+        tabla.innerHTML = "";
+        alumnos.forEach(a => {
+            const fila = document.createElement("tr");
+            fila.innerHTML = `<td>${a.padron}</td><td>${a.nombre}</td><td>${a.apellido}</td>`;
+            tabla.appendChild(fila);
+        });
+
+        document.getElementById("modalAlumnosMateria").style.display = "block";
+    }
+
+    function cerrarModalAlumnosMateria() {
+        document.getElementById("modalAlumnosMateria").style.display = "none";
+    }
+
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Detalle del Alumno</h1>
+
+    <div class="info-alumno">
+      <p><strong>Padrón:</strong> {{ alumno.padron }}</p>
+      <p><strong>Nombre:</strong> {{ alumno.nombre }} {{ alumno.apellido }}</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <h2>Materias Cursadas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Materia</th>
+          <th>Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in materias %}
+        <tr class="{% if m.nota >= 6 %}aprobada{% else %}reprobada{% endif %}">
+          <td>
+            <a href="#" onclick="mostrarAlumnosMateria('{{ m.codigo }}')">
+                {{ m.codigo }}
+            </a>
+          </td>
+          <td onclick="mostrarDetalle('{{ m.nombre }}', '{{ m.nota }}', '{{ m.fecha }}')">{{ m.nombre }}</td>
+          <td>{{ m.nota }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button onclick="abrirModal()">Agregar nota</button>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal()">&times;</span>
+      <h2>Agregar Nota</h2>
+      <form method="POST">
+        <label for="codigo">Código de materia:</label>
+        <input type="text" id="codigo" name="codigo" required>
+
+        <label for="nota">Nota:</label>
+        <input type="number" id="nota" name="nota" min="1" max="10" required>
+
+        <label for="fecha">Fecha:</label>
+        <input type="date" id="fecha" name="fecha" required>
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="modalDetalleMateria" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModalDetalleMateria()">&times;</span>
+      <h2>Detalle de la Materia</h2>
+      <p><strong>Materia:</strong> <span id="detalleMateriaNombre"></span></p>
+      <p><strong>Nota:</strong> <span id="detalleMateriaNota"></span></p>
+      <p><strong>Fecha:</strong> <span id="detalleMateriaFecha"></span></p>
+    </div>
+  </div>
+
+  <div id="modalAlumnosMateria" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModalAlumnosMateria()">&times;</span>
+      <h2>Alumnos de la materia <span id="nombreMateriaModal"></span></h2>
+      <table border="1">
+        <thead>
+          <tr><th>Padron</th><th>Nombre</th><th>Apellido</th></tr>
+        </thead>
+        <tbody id="alumnosMateriaTabla"></tbody>
+      </table>
+    </div>
+  </div>
+  
+</body>
+</html>
