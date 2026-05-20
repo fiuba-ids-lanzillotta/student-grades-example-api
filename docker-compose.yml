@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: student_grades_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-facultad}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - ./db/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
