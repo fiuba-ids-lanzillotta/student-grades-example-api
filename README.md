@@ -75,7 +75,7 @@ DB_PASSWORD=root
 DB_NAME=facultad
 ```
 
-Ajusta los valores segun como tengas configurado MySQL. El archivo `.env` esta en el `.gitignore` y no se trackea.
+Ajusta los valores segun como tengas configurado MySQL.
 
 ### 2. Base de datos MySQL
 
