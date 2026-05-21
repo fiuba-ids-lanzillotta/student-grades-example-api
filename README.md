@@ -51,45 +51,90 @@ student-grades-example-api/
 ## Requisitos previos
 
 - Python 3.10+
-- Docker + Docker Compose
+- **Una** de las dos opciones para correr MySQL:
+  - Docker + Docker Compose (recomendado), o
+  - Una instalacion local de MySQL 8
 
 ## Configuracion
 
-### 1. Base de datos MySQL via Docker
+### 1. Variables de entorno
 
-1. Copiar `.env.example` a `.env` (los defaults ya funcionan para desarrollo local):
+Copiar `.env.example` a `.env` (los defaults ya funcionan para desarrollo local):
+
+```bash
+cp .env.example .env
+```
+
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=root
+DB_NAME=facultad
+```
+
+Ajusta los valores segun como tengas configurado MySQL.
+
+### 2. Base de datos MySQL
+
+Eleg **una** de las dos opciones segun lo que tengas instalado.
+
+#### Opcion A: con Docker (recomendado)
+
+`docker-compose.yml` levanta MySQL 8 y monta `db/init_db.sql` como script de inicializacion, creando las tablas e insertando los datos de ejemplo automaticamente la **primera** vez:
+
+```bash
+docker compose up -d
+```
+
+Verificar que el contenedor este listo (puede tardar unos segundos):
+
+```bash
+docker compose logs -f mysql
+# Buscar la linea: "ready for connections"
+```
+
+Apagar el contenedor manteniendo los datos en el volumen:
+
+```bash
+docker compose down
+```
+
+Apagar y **borrar** los datos (la proxima vez se vuelven a cargar los datos de `init_db.sql`):
+
+```bash
+docker compose down -v
+```
+
+#### Opcion B: con MySQL instalado localmente
+
+Si ya tenes MySQL 8 corriendo en tu maquina (puerto `3306` por default):
+
+1. Crear la base de datos y cargar el esquema + datos de ejemplo:
 
    ```bash
-   cp .env.example .env
+   # Linux / macOS / WSL
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS facultad;"
+   mysql -u root -p facultad < db/init_db.sql
    ```
 
-   ```
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=root
-   DB_NAME=facultad
+   ```powershell
+   # Windows PowerShell
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS facultad;"
+   Get-Content db\init_db.sql | mysql -u root -p facultad
    ```
 
-2. Levantar el contenedor de MySQL. `docker-compose` lee `.env` y monta `db/init_db.sql` como script de inicializacion (crea las tablas e inserta los datos de ejemplo):
+2. Verificar que las tablas se hayan creado:
 
    ```bash
-   docker compose up -d
+   mysql -u root -p -e "USE facultad; SHOW TABLES;"
    ```
 
-3. Para apagar la base (manteniendo los datos en el volumen):
+   Deberias ver: `alumnos`, `materias`, `notas`.
 
-   ```bash
-   docker compose down
-   ```
+3. Si tu usuario, password, puerto o nombre de base no coinciden con los defaults, actualiza el `.env` antes de levantar la API.
 
-   Para borrar los datos:
-
-   ```bash
-   docker compose down -v
-   ```
-
-### 2. Entorno virtual, instalacion y ejecucion
+### 3. Entorno virtual, instalacion y ejecucion
 
 El proyecto incluye scripts de setup que crean el entorno virtual, instalan las dependencias y levantan la API.
 
@@ -119,6 +164,21 @@ Una vez iniciada, la API estara disponible en `http://localhost:5000/student_gra
 
 ## Endpoints
 
+Todos los endpoints estan bajo el prefijo `/student_grades_api`. Las respuestas son JSON; los errores siguen el formato:
+
+```json
+{
+    "errors": [
+        {
+            "code": "<codigo>",
+            "message": "<mensaje breve>",
+            "level": "error",
+            "description": "<descripcion detallada>"
+        }
+    ]
+}
+```
+
 | Metodo | Endpoint                                | Descripcion                                                 |
 |--------|-----------------------------------------|-------------------------------------------------------------|
 | GET    | `/alumnos`                              | Listar todos los alumnos                                    |
@@ -127,9 +187,77 @@ Una vez iniciada, la API estara disponible en `http://localhost:5000/student_gra
 | POST   | `/alumnos/<padron>/notas`               | Registrar una nueva nota para un alumno                     |
 | GET    | `/materias/<codigo>/alumnos`            | Listar los alumnos que cursaron una materia                 |
 
-Todos los endpoints estan bajo el prefijo `/student_grades_api`.
+### `GET /alumnos`
 
-### Ejemplo: registrar una nota
+Lista todos los alumnos.
+
+```bash
+curl http://localhost:5000/student_grades_api/alumnos
+```
+
+Respuesta `200 OK`:
+
+```json
+[
+    { "padron": 1, "nombre": "Juan",  "apellido": "Perez" },
+    { "padron": 2, "nombre": "Maria", "apellido": "Garcia" },
+    { "padron": 3, "nombre": "Pedro", "apellido": "Lopez" }
+]
+```
+
+Si no hay alumnos cargados, devuelve `204 No Content`.
+
+### `GET /alumnos/<padron>`
+
+Obtiene un alumno por su numero de padron.
+
+```bash
+curl http://localhost:5000/student_grades_api/alumnos/1
+```
+
+Respuesta `200 OK`:
+
+```json
+{ "padron": 1, "nombre": "Juan", "apellido": "Perez" }
+```
+
+Posibles errores:
+
+- `400 Bad Request`: el padron no es un entero positivo.
+- `404 Not Found`: no existe un alumno con ese padron.
+
+### `GET /alumnos/<padron>/notas`
+
+Lista las notas del alumno con datos de la materia y el flag `aprobada` (`true` si la nota es >= 6).
+
+```bash
+curl http://localhost:5000/student_grades_api/alumnos/1/notas
+```
+
+Respuesta `200 OK`:
+
+```json
+[
+    { "codigo": "TB022", "nombre": "IDS",         "nota": 9, "fecha": "2023-03-01", "aprobada": true },
+    { "codigo": "TB021", "nombre": "Fundamentos", "nota": 7, "fecha": "2023-03-02", "aprobada": true }
+]
+```
+
+Posibles errores: `400` (padron invalido), `404` (alumno inexistente).
+
+### `POST /alumnos/<padron>/notas`
+
+Registra una nueva nota para el alumno.
+
+**Headers**: `Content-Type: application/json`
+
+**Body**:
+
+| Campo    | Tipo    | Requerido | Descripcion                              |
+|----------|---------|-----------|------------------------------------------|
+| `codigo` | string  | si        | Codigo de la materia (debe existir)      |
+| `nota`   | int     | si        | Entero entre 1 y 10 (inclusive)          |
+| `fecha`  | string  | si        | Fecha en formato `YYYY-MM-DD`            |
 
 ```bash
 curl -X POST http://localhost:5000/student_grades_api/alumnos/1/notas \
@@ -141,13 +269,41 @@ Respuesta `201 Created`:
 
 ```json
 {
-    "codigo": "TB022",
-    "nombre": "IDS",
-    "nota": 8,
-    "fecha": "2025-03-15",
+    "codigo":   "TB022",
+    "nombre":   "IDS",
+    "nota":     8,
+    "fecha":    "2025-03-15",
     "aprobada": true
 }
 ```
+
+Posibles errores:
+
+- `400 Bad Request`: padron invalido, body invalido o campos con formato/rango incorrecto (la respuesta puede incluir varios errores acumulados en `errors[]`).
+- `404 Not Found`: el alumno o la materia no existen.
+
+### `GET /materias/<codigo>/alumnos`
+
+Lista los alumnos que tienen una nota cargada para esa materia.
+
+```bash
+curl http://localhost:5000/student_grades_api/materias/TB022/alumnos
+```
+
+Respuesta `200 OK`:
+
+```json
+[
+    { "padron": 1, "nombre": "Juan",  "apellido": "Perez",  "nota": 9, "fecha": "2023-03-01" },
+    { "padron": 2, "nombre": "Maria", "apellido": "Garcia", "nota": 9, "fecha": "2023-03-01" },
+    { "padron": 3, "nombre": "Pedro", "apellido": "Lopez",  "nota": 5, "fecha": "2023-03-01" }
+]
+```
+
+Posibles errores:
+
+- `400 Bad Request`: codigo invalido (vacio).
+- `404 Not Found`: no existe una materia con ese codigo.
 
 ## Patron de queries literales
 
