@@ -46,9 +46,20 @@ student-grades-example-api/
 │   └── validators/
 │       ├── alumnos.py              # Validacion de entrada para alumnos
 │       └── materias.py             # Validacion de entrada para materias
-└── db/
-    └── init_db.sql                 # Esquema + datos iniciales (lo corre docker-compose)
+├── db/
+│   └── init_db.sql                 # Esquema + datos iniciales (lo corre docker-compose)
+└── docs/
+    └── swagger.yaml                # Documentacion OpenAPI 3.0 de la API
 ```
+
+## Documentacion (Swagger / OpenAPI)
+
+La especificacion completa de la API en formato OpenAPI 3.0 vive en
+[`docs/swagger.yaml`](docs/swagger.yaml). Se puede visualizar de varias formas:
+
+- Pegando el contenido del archivo en [editor.swagger.io](https://editor.swagger.io).
+- Abriendolo con la extension "Swagger Viewer" (o similar) en VSCode.
+- Sirviendolo con cualquier renderer compatible con OpenAPI 3.
 
 ## Requisitos previos
 

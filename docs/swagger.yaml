@@ -1,0 +1,279 @@
+openapi: 3.0.0
+info:
+  title: Student Grades Example - API
+  description: |-
+    API REST de ejemplo para gestionar alumnos, materias y notas de una facultad.
+
+    Todos los endpoints cuelgan del prefijo `/student_grades_api`.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/student_grades_api
+paths:
+  /alumnos:
+    get:
+      summary: "Listar alumnos"
+      tags:
+        - Alumnos
+      responses:
+        '200':
+          description: "Listado de alumnos"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alumno'
+        '204':
+          $ref: '#/components/responses/NoContent'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /alumnos/{padron}:
+    parameters:
+      - $ref: '#/components/parameters/Padron'
+    get:
+      summary: "Obtener un alumno por padron"
+      tags:
+        - Alumnos
+      responses:
+        '200':
+          description: "Detalle del alumno"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alumno'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /alumnos/{padron}/notas:
+    parameters:
+      - $ref: '#/components/parameters/Padron'
+    get:
+      summary: "Listar las notas de un alumno"
+      tags:
+        - Notas
+      responses:
+        '200':
+          description: "Listado de notas con datos de la materia"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Nota'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: "Registrar una nueva nota para un alumno"
+      tags:
+        - Notas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaNota'
+      responses:
+        '201':
+          description: "Nota creada"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Nota'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /materias/{codigo}/alumnos:
+    parameters:
+      - $ref: '#/components/parameters/CodigoMateria'
+    get:
+      summary: "Listar los alumnos que cursaron una materia"
+      tags:
+        - Materias
+      responses:
+        '200':
+          description: "Listado de alumnos con su nota y fecha en la materia"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlumnoEnMateria'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    Alumno:
+      type: object
+      description: "Datos basicos de un alumno"
+      required:
+        - padron
+        - nombre
+        - apellido
+      properties:
+        padron:
+          type: integer
+          description: "Numero de padron unico del alumno"
+          example: 1
+        nombre:
+          type: string
+          example: "Juan"
+        apellido:
+          type: string
+          example: "Perez"
+    Nota:
+      type: object
+      description: "Nota de un alumno en una materia, con datos de la materia y flag de aprobacion"
+      properties:
+        codigo:
+          type: string
+          description: "Codigo de la materia"
+          example: "TB022"
+        nombre:
+          type: string
+          description: "Nombre de la materia"
+          example: "IDS"
+        nota:
+          type: integer
+          description: "Calificacion entera entre 1 y 10"
+          minimum: 1
+          maximum: 10
+          example: 9
+        fecha:
+          type: string
+          format: date
+          description: "Fecha en formato YYYY-MM-DD"
+          example: "2023-03-01"
+        aprobada:
+          type: boolean
+          description: "True si la nota es mayor o igual a 6"
+          example: true
+    NuevaNota:
+      type: object
+      description: "Datos requeridos para registrar una nota nueva"
+      required:
+        - codigo
+        - nota
+        - fecha
+      properties:
+        codigo:
+          type: string
+          description: "Codigo de la materia (debe existir)"
+          example: "TB022"
+        nota:
+          type: integer
+          description: "Calificacion entera entre 1 y 10"
+          minimum: 1
+          maximum: 10
+          example: 8
+        fecha:
+          type: string
+          format: date
+          description: "Fecha en formato YYYY-MM-DD"
+          example: "2025-03-15"
+    AlumnoEnMateria:
+      type: object
+      description: "Alumno con su nota y fecha en una materia"
+      properties:
+        padron:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: "Juan"
+        apellido:
+          type: string
+          example: "Perez"
+        nota:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 9
+        fecha:
+          type: string
+          format: date
+          example: "2023-03-01"
+    Errores:
+      type: object
+      properties:
+        errors:
+          type: array
+          description: "Listado de errores"
+          items:
+            $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      description: "Estructura de datos que contiene los detalles del error"
+      properties:
+        code:
+          type: string
+          description: "Codigo de error alfanumerico unico legible por humanos"
+          example: "alumno.not.found"
+        message:
+          type: string
+          description: "Breve resumen del problema reportado"
+          example: "Alumno no encontrado"
+        level:
+          type: string
+          description: "Nivel del problema reportado"
+          example: "error"
+          enum:
+            - info
+            - warning
+            - error
+        description:
+          type: string
+          description: "Descripcion detallada del problema reportado"
+          example: "No existe un alumno con padron '99'"
+  parameters:
+    Padron:
+      name: padron
+      in: path
+      schema:
+        type: integer
+        minimum: 1
+      description: "Numero de padron del alumno"
+      required: true
+      example: 1
+    CodigoMateria:
+      name: codigo
+      in: path
+      schema:
+        type: string
+      description: "Codigo de la materia"
+      required: true
+      example: "TB022"
+  responses:
+    NoContent:
+      description: "No Content"
+    BadRequest:
+      description: "Bad Request"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errores'
+    NotFound:
+      description: "Not Found"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errores'
+    InternalServerError:
+      description: "Internal Server Error"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Errores'
