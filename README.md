@@ -1,5 +1,7 @@
 # Student Grades Example - API
 
+> **Aviso:** este proyecto es **codigo de ejemplo** con fines didacticos. Puede contener errores, simplificaciones o decisiones de diseno discutibles. Si se usa como base para un trabajo practico u otro entregable, **debe adaptarse a las buenas practicas y consignas especificas de la materia/catedra** (estilo de codigo, manejo de errores, validaciones, tests, seguridad, persistencia, etc.).
+
 ## Motivacion
 
 Este proyecto es un **ejemplo practico** de como construir una pequena **API REST en Flask** que expone datos de una facultad (alumnos, materias y notas) usando **MySQL** como base de datos, levantada con `docker-compose`.
