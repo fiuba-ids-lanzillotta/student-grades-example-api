@@ -61,11 +61,7 @@ student-grades-example-api/
 
 ### 1. Variables de entorno
 
-Copiar `.env.example` a `.env` (los defaults ya funcionan para desarrollo local):
-
-```bash
-cp .env.example .env
-```
+El repo ya incluye un archivo `.env` con valores **por defecto pensados para desarrollo local**:
 
 ```
 DB_HOST=localhost
@@ -75,7 +71,21 @@ DB_PASSWORD=root
 DB_NAME=facultad
 ```
 
-Ajusta los valores segun como tengas configurado MySQL.
+> **Importante:** ajusta los valores del `.env` segun como tengas configurado MySQL (por ejemplo, si usas otro usuario, password, puerto o nombre de base).
+
+Para que Git **no tracke** tus cambios locales al `.env` (y evitar pushear credenciales por accidente), ejecuta una sola vez despues de clonar el repo:
+
+```bash
+git update-index --skip-worktree .env
+```
+
+A partir de ahi, los cambios al `.env` no apareceran en `git status` ni se incluiran en commits. Si en algun momento queres volver a trackearlo:
+
+```bash
+git update-index --no-skip-worktree .env
+```
+
+> Tambien existe `.env.example` con los mismos valores como referencia documental.
 
 ### 2. Base de datos MySQL
 
