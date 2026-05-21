@@ -326,3 +326,37 @@ with motor.begin() as conexion:
 ```
 
 Ver `student_grades_example/db.py` para todos los ejemplos de queries.
+
+## Glosario de terminos
+
+- **API REST**: estilo de arquitectura para servicios web que expone recursos via HTTP (GET, POST, PUT, DELETE) usando, en general, JSON como formato de intercambio.
+- **Endpoint**: ruta concreta de la API (por ejemplo `GET /alumnos/<padron>`) que responde a un metodo HTTP y realiza una accion sobre un recurso.
+- **Request / Response**: par de mensajes HTTP. La **request** es lo que envia el cliente (metodo, headers, body); la **response** es lo que devuelve el servidor (status code, headers, body).
+- **Status code**: codigo numerico de la respuesta HTTP. Por ejemplo: `200 OK`, `201 Created`, `204 No Content`, `400 Bad Request`, `404 Not Found`.
+- **Body**: contenido (payload) de una request o response. En esta API es JSON.
+- **JSON**: formato de texto para representar datos estructurados (objetos y arrays). Es el formato usado para los bodies de request y response.
+- **Flask**: micro framework web de Python. En este ejemplo se usa tanto en el frontend (renderizado server-side) como en la API backend.
+- **Frontend**: aplicacion que renderiza las paginas HTML del lado del servidor y consume la API. En este ejemplo integrador corre en el puerto 5001 (`student-grades-example-web`).
+- **Backend / API**: servicio HTTP REST (este proyecto) que expone los endpoints de alumnos, notas y materias. Corre en el puerto 5000.
+- **Blueprint (Flask)**: mecanismo de Flask para agrupar rutas relacionadas en modulos (por ejemplo `routes/alumnos.py`, `routes/materias.py`).
+- **Validator**: funcion que verifica que el body de la request cumple las reglas (campos requeridos, formato, rangos). Viven en `validators/`.
+- **Service**: capa con la **logica de negocio** (listar alumnos, agregar nota). Vive en `services/` y es invocada desde las routes.
+- **DTO (Data Transfer Object)**: estructura usada para pasar datos entre capas. En este proyecto se modelan como `dict` de Python (estilo funcional, sin clases).
+- **SQLAlchemy**: libreria de Python para hablar con bases SQL. Aca se usa **sin ORM**, ejecutando SQL literal con `text()`.
+- **ORM (Object Relational Mapper)**: capa que mapea tablas a clases/objetos. Este proyecto **no** lo usa para mantener el SQL explicito.
+- **Query parametrizada**: query SQL en la que los valores se pasan como parametros (`:padron`) y no concatenados al string, evitando **SQL injection**.
+- **SQL injection**: vulnerabilidad por la que un atacante inyecta SQL malicioso a traves de inputs no sanitizados.
+- **Migracion / esquema**: definicion de la estructura de la base (tablas, columnas). Aca vive en `db/init_db.sql`.
+- **MySQL**: motor de base de datos relacional usado en este proyecto. Se levanta en un contenedor via Docker Compose.
+- **Docker / Docker Compose**: herramientas para correr servicios (en este caso MySQL) en contenedores aislados, definidos en `docker-compose.yml`.
+- **Contenedor**: instancia en ejecucion de una imagen Docker (por ejemplo el contenedor de MySQL).
+- **Volumen (Docker)**: almacenamiento persistente del contenedor; permite hacer `down` sin perder los datos.
+- **`.env` / variables de entorno**: archivo con configuracion sensible (credenciales, secretos) que **no** se commitea al repo. `.env.example` es la plantilla.
+- **CORS (Cross-Origin Resource Sharing)**: mecanismo del navegador que controla que dominios pueden consumir la API. Relevante cuando el frontend corre en otro origen.
+- **Entorno virtual**: directorio aislado con la version de Python y las dependencias del proyecto, para no mezclarlas con las del sistema.
+- **virtualenv / `venv`**: herramienta estandar de Python para crear entornos virtuales. Las dependencias se declaran en `requirements.txt` y se instalan con `pip install -r requirements.txt`. En este proyecto lo levantan los scripts `setup_virtualenv.sh` / `setup_virtualenv.bat`.
+- **pipenv**: herramienta alternativa que combina la gestion del entorno virtual con la de dependencias en un solo flujo. Usa `Pipfile` (declaracion) y `Pipfile.lock` (versiones exactas resueltas) en vez de `requirements.txt`. En este proyecto lo levantan los scripts `setup_pipenv.sh` / `setup_pipenv.bat`.
+- **`pip`**: gestor de paquetes de Python. Instala librerias desde PyPI dentro del entorno activo.
+- **Padron**: identificador unico del alumno (entero positivo). Es la clave primaria de la tabla `alumnos`.
+- **Materia**: asignatura identificada por un `codigo` corto (por ejemplo `TB022`).
+- **Nota**: calificacion entera entre 1 y 10 asociada a un alumno y una materia en una fecha determinada. Se considera **aprobada** cuando es `>= 6`.
